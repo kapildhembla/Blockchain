@@ -67,8 +67,9 @@ contract Lottery {
         //event to be sendout to owner
     }
     
-    function processLotteryWinners() public {
+    function processLotteryWinners() public returns (Player memory _winner) {
         require(msg.sender == owner, "Only owner can execute ");
+        require(state == LotteryState.Started, "Lottery is not yet opened");
         uint32 prizeMoney = totalAmount/2;
         /*uint32 firstPrizeMoney = prizeMoney * 50/100;
         uint32 secondPrizeMoney = prizeMoney * 30/100;
@@ -84,6 +85,8 @@ contract Lottery {
         //Send notification
         
         state = LotteryState.Finished;
+        //_winner = 
+        return playerMap[winner];
         
     }
     
