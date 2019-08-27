@@ -25,11 +25,13 @@ contract Lottery {
 
     address private owner;
     uint32 private totalAmount;
+    uint32 private ticketPrice;
     address private winner;
     
     mapping (address => Player) playerMap;
     Player[] players;
     LotteryTicket[] tickets;
+    mapping(address => LotteryTicket[]) playerLotteryTicketsMapping;
     
     constructor () public {
         state = LotteryState.NotStarted;
@@ -51,24 +53,34 @@ contract Lottery {
     
     function startLottery() public{
         require (owner == msg.sender, "Only owner can open lottery process.");
+        ticketPrice = 1;
         state = LotteryState.Started;
         
     }
     
-    function buyLotteryTickets() public {
+    function buyLotteryTicket() public {
+        buyLotteryTickets(1);
+        //event to be sendout to owner
+    }
+    
+    function buyLotteryTickets(uint count) public {
         require(state == LotteryState.Started, "Lottery is not yet opened");
         require(owner != msg.sender, "Lottery owner/organizer can't buy tickets.");
         require(playerMap[msg.sender].isExist,"User not registered.");
         
-        LotteryTicket memory ticket = LotteryTicket(tickets.length+1,1, msg.sender);
-        totalAmount = totalAmount + 1;
-        tickets.push(ticket);
+        for(uint counter=1; counter <= count; counter++) {
+            LotteryTicket memory ticket = LotteryTicket(tickets.length+1,ticketPrice, msg.sender);
+            totalAmount = totalAmount + ticketPrice;
+            tickets.push(ticket);
+            playerLotteryTicketsMapping[msg.sender].push(ticket);
+        }
         
         //event to be sendout to owner
     }
     
-    function processLotteryWinners() public {
+    function processLotteryWinners() public returns (Player memory _winner) {
         require(msg.sender == owner, "Only owner can execute ");
+        require(state == LotteryState.Started, "Lottery is not yet opened");
         uint32 prizeMoney = totalAmount/2;
         /*uint32 firstPrizeMoney = prizeMoney * 50/100;
         uint32 secondPrizeMoney = prizeMoney * 30/100;
@@ -84,6 +96,7 @@ contract Lottery {
         //Send notification
         
         state = LotteryState.Finished;
+        return playerMap[winner];
         
     }
     
@@ -95,6 +108,12 @@ contract Lottery {
      function getPlayers() view public returns (Player[] memory _players ) {
          require(msg.sender == owner, "Only owner can execute ");
          return(players);
+    }
+    
+    function getPurchasedLotteryTickets() view public returns (LotteryTicket[] memory _tickets) {
+        require(msg.sender != owner, "Owner can't have tickets ");
+       _tickets = playerLotteryTicketsMapping[msg.sender];
+        
     }
     
     
